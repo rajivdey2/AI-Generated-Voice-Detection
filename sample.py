@@ -2,7 +2,7 @@ import base64
 import json
 
 # Encode audio
-with open('data/raw/human/human_sample_001.wav', 'rb') as f:
+with open('data/raw/human/english_human_001.wav', 'rb') as f:
     audio_base64 = base64.b64encode(f.read()).decode('utf-8')
 
 # Create JSON payload

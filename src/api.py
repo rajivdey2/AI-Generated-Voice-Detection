@@ -1,8 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel, Field
 from typing import Optional
 import sys
 from pathlib import Path
+import os
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -10,7 +11,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from src.audio_processor import AudioProcessor
 from src.feature_extractor import FeatureExtractor
 from src.model import VoiceDetectionModel
-from config import MODEL_PATH, SCALER_PATH
+from config import MODEL_PATH, SCALER_PATH, MODEL_DIR
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -19,28 +20,85 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# API Key for authentication (set in environment variable)
+API_KEY = os.getenv("API_KEY", "hackathon_demo_key_2024")
+
+# Language mapping
+LANGUAGE_CODES = {
+    'english': 'en', 'en': 'en',
+    'tamil': 'ta', 'ta': 'ta',
+    'hindi': 'hi', 'hi': 'hi',
+    'malayalam': 'ml', 'ml': 'ml',
+    'telugu': 'te', 'te': 'te'
+}
+
 # Initialize components
 audio_processor = AudioProcessor()
 feature_extractor = FeatureExtractor()
-model = VoiceDetectionModel()
 
-# Load trained model (will be trained separately)
+# Load models - try language-specific first, fall back to universal
+models = {}
+universal_model = None
+
+print("Loading models...")
+# Try to load universal model
 try:
-    model.load(MODEL_PATH, SCALER_PATH)
-    print("Model loaded successfully")
+    universal_model = VoiceDetectionModel()
+    universal_model.load(MODEL_PATH, SCALER_PATH)
+    print("✓ Universal model loaded")
 except Exception as e:
-    print(f"Warning: Could not load model - {e}")
-    print("Please train the model first using train.py")
+    print(f"⚠️ Universal model not found: {e}")
+
+# Try to load language-specific models
+for lang_name, lang_code in LANGUAGE_CODES.items():
+    if lang_code not in models:  # Avoid duplicates
+        try:
+            model_path = MODEL_DIR / f"voice_detector_{lang_code}.pkl"
+            scaler_path = MODEL_DIR / f"scaler_{lang_code}.pkl"
+            
+            if model_path.exists():
+                model = VoiceDetectionModel()
+                model.load(model_path, scaler_path)
+                models[lang_code] = model
+                print(f"✓ {lang_name} ({lang_code}) model loaded")
+        except Exception as e:
+            print(f"⚠️ {lang_name} model not found: {e}")
+
+if not models and not universal_model:
+    print("⚠️ WARNING: No models loaded! Please train models first.")
+else:
+    print(f"✓ Ready with {len(models)} language-specific models" + 
+          (" and 1 universal model" if universal_model else ""))
+
+def get_model_for_language(language):
+    """Get the appropriate model for a language"""
+    if not language:
+        # No language specified, use universal if available
+        return universal_model if universal_model else list(models.values())[0] if models else None
+    
+    # Normalize language code
+    lang_code = LANGUAGE_CODES.get(language.lower())
+    
+    if not lang_code:
+        # Unknown language, use universal
+        return universal_model if universal_model else list(models.values())[0] if models else None
+    
+    # Return language-specific model if available, otherwise universal
+    return models.get(lang_code, universal_model)
 
 # Request/Response models
 class AudioInput(BaseModel):
     audio_base64: str = Field(
         ..., 
-        description="Base64-encoded MP3 audio file"
+        description="Base64-encoded audio file (WAV/MP3)"
     )
     language: Optional[str] = Field(
         None,
         description="Language of the audio (tamil, english, hindi, malayalam, telugu)"
+    )
+    audio_format: Optional[str] = Field(
+        "wav",
+        description="Audio format (wav or mp3)"
     )
 
 class DetectionResponse(BaseModel):
@@ -69,6 +127,15 @@ class DetectionResponse(BaseModel):
         description="Language of the audio (if provided)"
     )
 
+# Helper function to verify API key
+def verify_api_key(x_api_key: str = Header(...)):
+    if x_api_key != API_KEY:
+        raise HTTPException(
+            status_code=403,
+            detail="Invalid API key"
+        )
+    return x_api_key
+
 # API endpoints
 @app.get("/")
 async def root():
@@ -77,40 +144,55 @@ async def root():
         "message": "AI Voice Detection API",
         "version": "1.0.0",
         "endpoints": {
-            "/detect": "POST - Detect if voice is AI-generated",
+            "/detect": "POST - Detect if voice is AI-generated (requires API key)",
+            "/predict": "POST - Alias for /detect (requires API key)",
             "/health": "GET - Check API health status",
             "/docs": "GET - API documentation"
-        }
+        },
+        "authentication": "Include 'x-api-key' header in requests"
     }
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    model_loaded = model.model is not None
     return {
-        "status": "healthy" if model_loaded else "degraded",
-        "model_loaded": model_loaded,
+        "status": "healthy" if (models or universal_model) else "degraded",
+        "models_loaded": {
+            "universal": universal_model is not None,
+            "language_specific": list(models.keys()) if models else [],
+            "total_models": len(models) + (1 if universal_model else 0)
+        },
+        "supported_languages": list(LANGUAGE_CODES.values()),
         "components": {
             "audio_processor": True,
-            "feature_extractor": True,
-            "model": model_loaded
+            "feature_extractor": True
         }
     }
 
 @app.post("/detect", response_model=DetectionResponse)
-async def detect_ai_voice(audio_input: AudioInput):
+async def detect_ai_voice(
+    audio_input: AudioInput,
+    x_api_key: str = Header(..., description="API Key for authentication")
+):
     """
     Detect if a voice sample is AI-generated or human
     
     Args:
-        audio_input: AudioInput object with base64-encoded MP3
+        audio_input: AudioInput object with base64-encoded audio
+        x_api_key: API key in header
         
     Returns:
         DetectionResponse with classification, confidence, and explanation
     """
+    # Verify API key
+    verify_api_key(x_api_key)
+    
     try:
-        # Check if model is loaded
-        if model.model is None:
+        # Get appropriate model for language
+        model = get_model_for_language(audio_input.language)
+        
+        # Check if model is available
+        if model is None or model.model is None:
             raise HTTPException(
                 status_code=503,
                 detail="Model not loaded. Please train the model first."
@@ -158,6 +240,15 @@ async def detect_ai_voice(audio_input: AudioInput):
             status_code=500,
             detail=f"Internal server error: {str(e)}"
         )
+
+# Alias endpoint for hackathon (some use /predict instead of /detect)
+@app.post("/predict", response_model=DetectionResponse)
+async def predict_ai_voice(
+    audio_input: AudioInput,
+    x_api_key: str = Header(..., description="API Key for authentication")
+):
+    """Alias for /detect endpoint"""
+    return await detect_ai_voice(audio_input, x_api_key)
 
 # Run with: uvicorn src.api:app --reload --host 0.0.0.0 --port 8000
 if __name__ == "__main__":

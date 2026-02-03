@@ -111,12 +111,13 @@ class VoiceDetectionModel:
         
         # Get prediction
         prediction = self.model.predict(features_scaled)[0]
+        prediction = int(prediction)  # Convert to Python int
         
         # Get probability scores
         probabilities = self.model.predict_proba(features_scaled)[0]
         
         # Get confidence (probability of predicted class)
-        confidence = probabilities[prediction]
+        confidence = float(probabilities[prediction])  # Convert to Python float
         
         # Generate explanation
         explanation = self._generate_explanation(
@@ -127,7 +128,7 @@ class VoiceDetectionModel:
         
         result = {
             'classification': 'AI-generated' if prediction == 1 else 'human',
-            'confidence': float(confidence),
+            'confidence': confidence,
             'ai_probability': float(probabilities[1]),
             'human_probability': float(probabilities[0]),
             'explanation': explanation
