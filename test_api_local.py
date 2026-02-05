@@ -49,8 +49,9 @@ def test_api_with_file(audio_file, language='en'):
     
     payload = {
         "audio_base64": audio_base64,
-        "language": language,
-        "audio_format": "wav"
+        "audio_format": "wav",
+        "language": language
+        
     }
     
     # Make request

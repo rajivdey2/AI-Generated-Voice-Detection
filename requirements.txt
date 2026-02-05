@@ -10,8 +10,8 @@ soundfile==0.12.1
 pydub==0.25.1
 audioread==3.0.1
 
-# Scientific computing
-numpy==1.24.3
+# Scientific computing - FIXED VERSIONS
+numpy==1.26.4
 scipy==1.11.4
 
 # Machine Learning
