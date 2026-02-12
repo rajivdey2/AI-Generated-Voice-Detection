@@ -1,13 +1,3 @@
----
-title: AI Voice Detection API
-emoji: 🎙️
-colorFrom: blue
-colorTo: purple
-sdk: docker
-app_port: 8000
-pinned: false
-license: mit
----
 
 # 🎙️ AI Voice Detection API
 
@@ -327,10 +317,9 @@ This API was developed for [Hackathon Name] to detect AI-generated voices across
 - [Team Member Names]
 
 ### Project Links
-- **Live API**: https://huggingface.co/spaces/rajivdey/AI-Voice-Detection
-- **Documentation**: https://huggingface.co/spaces/rajivdey/AI-Voice-Detection/docs
+- **Live API**: https:// https://rajivdey-ai-voice-detection.hf.space
+- **Documentation**: https://huggingface.co/spaces/rajivdey/AI-Voice-Detection
 - **GitHub**: https://github.com/rajivdey2/AI-Generated-Voice-Detection
 
 ---
 
-**Built with ❤️ using FastAPI, scikit-learn, and librosa**
