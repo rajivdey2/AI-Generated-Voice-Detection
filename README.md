@@ -25,7 +25,7 @@ with open('audio.wav', 'rb') as f:
 
 # Make API request
 response = requests.post(
-    'https://huggingface.co/spaces/YOUR_USERNAME/ai-voice-detection/api/detect',
+    'https://rajivdey-ai-voice-detection.hf.space/detect',
     headers={'x-api-key': 'hackathon_demo_key_2024'},
     json={
         'audio_base64': audio_base64,
@@ -40,7 +40,7 @@ print(response.json())
 ### cURL Example
 
 ```bash
-curl -X POST "https://huggingface.co/spaces/YOUR_USERNAME/ai-voice-detection/detect" \
+curl -X POST "https://rajivdey-ai-voice-detection.hf.space/detect" \
   -H "Content-Type: application/json" \
   -H "x-api-key: hackathon_demo_key_2024" \
   -d '{
@@ -222,7 +222,7 @@ async function detectVoice(audioFilePath, language = 'en') {
     const audioBase64 = audioBuffer.toString('base64');
     
     const response = await axios.post(
-        'https://huggingface.co/spaces/rajivdey/AI-Voice-Detection/detect',
+        'https://rajivdey-ai-voice-detection.hf.space/detect',
         {
             audio_base64: audioBase64,
             language: language,
@@ -267,7 +267,7 @@ detectVoice('audio.wav', 'en')
 
 ```bash
 # Clone repository
-git clone https://huggingface.co/spaces/rajivdey/AI-Voice-Detection
+git clone https://github.com/rajivdey2/AI-Generated-Voice-Detection
 cd ai-voice-detection
 
 # Create virtual environment
@@ -310,11 +310,11 @@ MIT License - See LICENSE file for details
 
 ## 🏆 Hackathon Submission
 
-This API was developed for [Hackathon Name] to detect AI-generated voices across multiple Indian languages.
+This API was developed for [GUVI Hackathon] to detect AI-generated voices across multiple Indian languages.
 
 ### Team
-- [Your Name]
-- [Team Member Names]
+- [Rajiv Dey]
+- [Sai ,Harsh ,Subhasmita ]
 
 ### Project Links
 - **Live API**: https:// https://rajivdey-ai-voice-detection.hf.space
