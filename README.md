@@ -317,7 +317,7 @@ This API was developed for [GUVI Hackathon] to detect AI-generated voices across
 - [Sai ,Harsh ,Subhasmita ]
 
 ### Project Links
-- **Live API**: https:// https://rajivdey-ai-voice-detection.hf.space
+- **Live API**: https://rajivdey-ai-voice-detection.hf.space
 - **Documentation**: https://huggingface.co/spaces/rajivdey/AI-Voice-Detection
 - **GitHub**: https://github.com/rajivdey2/AI-Generated-Voice-Detection
 
