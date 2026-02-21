@@ -3,6 +3,14 @@
 
 Multi-language AI-generated voice detection system for Tamil, English, Hindi, Malayalam, and Telugu.
 - **Live API**: https://rajivdey-ai-voice-detection.hf.space/docs
+  
+## 🔑 Authentication
+
+Include your API key in the request header:
+
+```
+x-api-key: hackathon_demo_key_2024
+```
 
 ## 🚀 Quick Start
 
